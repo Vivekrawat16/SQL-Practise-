@@ -140,26 +140,6 @@ WHERE oh.STATUS_ID = 'ORDER_CREATED';
 
 8.3 
 
-select p.product_id,
-       p.product_name,
-       ii.facility_id,
-       sum(ii.quantity_on_hand_total) as qoh,
-       sum(ii.available_to_promise_total) as atp,
-       pf.minimum_stock
-from product p
-join inventory_item ii
-    on p.product_id = ii.product_id
-join product_facility pf
-    on ii.product_id = pf.product_id
-   and ii.facility_id = pf.facility_id
-group by p.product_id,
-         p.product_name,
-         ii.facility_id,
-         pf.minimum_stock
-having sum(ii.quantity_on_hand_total) <= pf.minimum_stock
-   and sum(ii.available_to_promise_total) <= pf.minimum_stock;
-
-
 select oh.order_id,
       oh.status_id ,
       oisp.facility_id,

@@ -101,7 +101,12 @@ return_item ri on rh.RETURN_ID = ri.RETURN_ID and ri.STATUS_ID = 'RETURN_COMPLET
 group by ri.ORDER_ID
 having sum(ri.RETURN_QUANTITY) > 1;
 
+
+
+
 7 Store with Most One-Day Shipped Orders (Last Month)
+
+
 select s.origin_facility_id as facility_id,
        f.facility_name as name,
        count(distinct s.primary_order_id) as total_one_day_ship_orders
