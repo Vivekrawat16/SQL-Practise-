@@ -113,18 +113,15 @@ group by f.facility_id, f.facility_name;
 
 Question: Find inventory items marked as lost or damaged.
 
-SELECT
-    ii.INVENTORY_ITEM_ID,
-    ii.PRODUCT_ID,
-    ii.FACILITY_ID,
-    iiv.QUANTITY_ON_HAND_VAR,
-    iiv.VARIANCE_REASON_ID,
-    iiv.CREATED_TX_STAMP
-FROM inventory_item ii
-JOIN inventory_item_variance iiv
-    ON ii.INVENTORY_ITEM_ID = iiv.INVENTORY_ITEM_ID
-WHERE iiv.VARIANCE_REASON_ID IN ('VAR_DAMAGED','VAR_LOST');
-8.3 Current Facility of Open Orders
+SELECT ii.INVENTORY_ITEM_ID,
+ii.PRODUCT_ID,
+ii.FACILITY_ID,
+sum(iiv.Quantity_On_Hand_Var) as QUANTITY_LOST_OR_DAMAGED,
+iiv.reason_enum_id as REASON_CODE,
+iiv.created_tx_stamp AS TRANSACTION_DATE
+from inventory_item ii 
+join inventory_item_variance iiv on ii.INVENTORY_ITEM_ID = iiv.INVENTORY_ITEM_ID and iiv.reason_enum_id in ("VAR_DAMAGED", "VAR_STOLEN", "VAR_LOST")
+group by ii.inventory_item_id , iiv.reason_enum_id
 
 Question: Retrieve facility information for open orders.
 
@@ -141,21 +138,50 @@ JOIN facility f
     ON oisg.FACILITY_ID = f.FACILITY_ID
 WHERE oh.STATUS_ID = 'ORDER_CREATED';
 
+8.3 
 
+select p.product_id,
+       p.product_name,
+       ii.facility_id,
+       sum(ii.quantity_on_hand_total) as qoh,
+       sum(ii.available_to_promise_total) as atp,
+       pf.minimum_stock
+from product p
+join inventory_item ii
+    on p.product_id = ii.product_id
+join product_facility pf
+    on ii.product_id = pf.product_id
+   and ii.facility_id = pf.facility_id
+group by p.product_id,
+         p.product_name,
+         ii.facility_id,
+         pf.minimum_stock
+having sum(ii.quantity_on_hand_total) <= pf.minimum_stock
+   and sum(ii.available_to_promise_total) <= pf.minimum_stock;
+
+
+select oh.order_id,
+      oh.status_id ,
+      oisp.facility_id,
+      f.facility_name,
+      f.facility_type_id
+      
+from order_header oh 
+JOIN order_item_ship_group oisp on oh.order_id= oisp.order_id 
+join facility f on oisp.facility_id = f.facility_id 
+where  oh.status_id not in ('ORDER_COMPLETED','ORDER_CANCELLED');
 
 
 8.4 Items Where ATP and QOH Differ
 
 Question: Find inventory items where ATP and QOH do not match.
 
-SELECT
-    PRODUCT_ID,
-    FACILITY_ID,
-    QUANTITY_ON_HAND_TOTAL AS QOH,
-    AVAILABLE_TO_PROMISE_TOTAL AS ATP,
-    (QUANTITY_ON_HAND_TOTAL - AVAILABLE_TO_PROMISE_TOTAL) AS DIFFERENCE
-FROM inventory_item
-WHERE QUANTITY_ON_HAND_TOTAL <> AVAILABLE_TO_PROMISE_TOTAL;
+select product_id , 
+       facility_id, 
+       quantity_on_hand_total,
+       available_to_promise_total , 
+       (quantity_on_hand_total - available_to_promise_total) as diff
+from inventory_item  ;
 
 
 
