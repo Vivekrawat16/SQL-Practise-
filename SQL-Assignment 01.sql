@@ -133,7 +133,7 @@ SELECT
   (SELECT s.status_id 
    FROM shipment s 
    WHERE s.primary_order_id = oh.order_id 
-   LIMIT 1)
+   LIMIT 1) AS SHIPMENT_STATUS
 FROM 
   order_header oh
 JOIN order_payment_preference opp 
