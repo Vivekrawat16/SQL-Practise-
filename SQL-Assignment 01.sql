@@ -5,18 +5,37 @@
 Business Question:** How many new customers signed up during June 2023?
 
 SELECT
-  p.FIRST_NAME,
-  p.LAST_NAME,
-  (SELECT cm.INFO_STRING FROM contact_mech cm  JOIN party_contact_mech pcm ON p.PARTY_ID = pcm.PARTY_ID AND cm.CONTACT_MECH_TYPE_ID = 'EMAIL_ADDRESS' LIMIT 1) AS EMAIL_ADDRESS,
-  (SELECT tn.CONTACT_NUMBER FROM contact_mech cm  JOIN party_contact_mech pcm ON p.PARTY_ID = pcm.PARTY_ID AND cm.CONTACT_MECH_TYPE_ID = 'TELECOM_NUMBER'
-   JOIN telecom_number tn ON tn.CONTACT_MECH_ID = pcm.CONTACT_MECH_ID LIMIT 1) AS CONTACT_NUMBER
-FROM 
-  person p
-JOIN party_role pr ON pr.PARTY_ID = p.PARTY_ID 
-  AND p.CREATED_STAMP >= '2023-06-01 00:00:00' 
-  AND p.CREATED_STAMP <= '2023-06-30 23:59:59' 
-  AND pr.ROLE_TYPE_ID = 'CUSTOMER';
+    p.FIRST_NAME,
+    p.LAST_NAME,
 
+    (
+        SELECT cm.INFO_STRING
+        FROM contact_mech cm
+        JOIN party_contact_mech pcm
+            ON cm.CONTACT_MECH_ID = pcm.CONTACT_MECH_ID
+        WHERE pcm.PARTY_ID = p.PARTY_ID
+          AND cm.CONTACT_MECH_TYPE_ID = 'EMAIL_ADDRESS'
+        LIMIT 1
+    ) AS EMAIL_ADDRESS,
+
+    (
+        SELECT tn.CONTACT_NUMBER
+        FROM contact_mech cm
+        JOIN party_contact_mech pcm
+            ON cm.CONTACT_MECH_ID = pcm.CONTACT_MECH_ID
+        JOIN telecom_number tn
+            ON tn.CONTACT_MECH_ID = cm.CONTACT_MECH_ID
+        WHERE pcm.PARTY_ID = p.PARTY_ID
+          AND cm.CONTACT_MECH_TYPE_ID = 'TELECOM_NUMBER'
+        LIMIT 1
+    ) AS CONTACT_NUMBER
+
+FROM person p
+JOIN party_role pr
+    ON pr.PARTY_ID = p.PARTY_ID
+WHERE pr.ROLE_TYPE_ID = 'CUSTOMER'
+  AND p.CREATED_STAMP >= '2023-06-01 00:00:00'
+  AND p.CREATED_STAMP <= '2023-06-30 23:59:59';
 
 
 
